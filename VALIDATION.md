@@ -49,3 +49,10 @@ Baseline failures are recorded rather than repaired as part of this tooling-only
 - `npm run dev -- --host 127.0.0.1 --port 5173 --strictPort` started successfully. HTTP checks returned 200 for `/`, `/book`, `/booking/B1000`, `/admin`, `/admin/calendar`, `/admin/manage`, `/admin/bookings/B1000`, and `/favicon.svg`; an unknown route returned 404. Responses contained no removed-editor references.
 - Vite reports that tsconfig-paths can now be replaced by its native resolver; the requested plugin is retained. Existing dependency deprecation warnings remain. No framework upgrades were made.
 - `git diff --check` passed. Not verified: full interactive browser/mobile flows or a live Vercel deployment. The HTTP checks verify document serving, not hydrated interactions. The user's separate deletion of `public/robots.txt` remains untouched.
+
+## Final reference scan — 25 October 2026
+
+- After the code/dependency removal, the only remaining tracked references to the former editor were historical descriptions and obsolete configuration examples in AUDIT.md. Updated those sections to describe the independent configuration while retaining the functional audit findings.
+- Case-insensitive Git content search, tracked-path search and a separate package-lock.json search for the removed vendor name all returned zero matches. No remaining tracked matches require an exception.
+- Published Git history is intentionally unchanged and can still contain the original integration. No history rewrite or push was performed.
+- The neutral favicon and root link were committed separately; no index.html exists in this Start application, and page titles/social metadata already use the clinic name. README and AGENTS were rewritten in their own commit.

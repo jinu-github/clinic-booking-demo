@@ -1,12 +1,12 @@
 # Project audit
 
-Audited 24 October 2026. Source inspection only; no application code, configuration, dependencies, or existing work changed. No installation, build, deployment, browser session, or test run was performed. Accessibility/mobile findings below distinguish source defects from layout risks that need device testing.
+Originally audited 24 October 2026 by source inspection. Tooling and integration sections updated 25 October after the independent-build migration; see VALIDATION.md for completed installation, build, test and dev-server checks. No live deployment or interactive browser/mobile verification has been performed. Accessibility/mobile findings below distinguish source defects from layout risks that need device testing.
 
 ## Summary
 
-- This is React + TypeScript + TanStack Start, with Vite, Tailwind and Nitro; Bun is a package-manager choice, not an application requirement.
+- This is React + TypeScript + TanStack Start, with Vite, Tailwind and Nitro, using npm and Node 22.23.4.
 - All clinic data and the fake admin session live in React state and browser localStorage; there is no business backend.
-- TanStack Start can run on Vercel Functions; the installed Lovable wrapper already supports Vercel detection and an explicit preset.
+- TanStack Start targets Vercel Functions through explicit Vite plugins and Nitro's Vercel preset.
 - Vercel Hobby fits a personal fictional demo, but its non-commercial restriction rules out a real clinic booking business.
 - Neon Free + Drizzle over HTTP fits the requested architecture without an always-on application server, WebSockets or AI.
 - Start server functions can supply the entire booking API, provided authentication, authorization, validation and database concurrency controls are added.
@@ -15,7 +15,7 @@ Audited 24 October 2026. Source inspection only; no application code, configurat
 
 ## Scope and existing work
 
-At audit start, `git status --short` already showed a modified `src/routeTree.gen.ts` and an untracked `package-lock.json`. These were left untouched. `AUDIT.md` is the only file added by this audit. All eight route modules, the root shell, store, slot logic, shared site components, styles, configuration, tests and Lovable integration were inspected. The installed Lovable wrapper's implementation and types were also read to resolve deployment behavior.
+At the original audit start, `git status --short` showed a modified `src/routeTree.gen.ts` and an untracked `package-lock.json`; that audit left them untouched. All eight route modules, the root shell, store, slot logic, shared site components, styles, configuration and tests were inspected. Subsequent tooling changes are recorded in VALIDATION.md. The former editor-specific integration has now been removed without rewriting Git history.
 
 ## Stack and structure
 
@@ -25,26 +25,24 @@ Versions below are declarations from `package.json`, not a claim that every care
 | --- | --- |
 | App | React/React DOM `^19.2.0`, TypeScript `^5.8.3`, ES modules |
 | Framework | `@tanstack/react-start` `1.168.60`, router `1.170.41`, router plugin `1.168.42`; file-based routes and SSR entry |
-| Build | Vite `8.1.5`, Lovable Vite wrapper `2.26.5`, Nitro `3.0.260603-beta`, Rolldown override `1.2.1` |
+| Build | Vite `8.1.5`, explicit Start/React/Tailwind/tsconfig-paths plugins, Nitro `3.0.260603-beta`, Rolldown override `1.2.1`, Lightning CSS `1.33.0` |
 | Styling/UI | Tailwind `^4.2.1`, shadcn-style local components, Radix primitives, Lucide icons, CSS theme tokens, `tw-animate-css` |
 | Data | React context/useState + localStorage. React Query `^5.101.1` is provided but no route uses queries/mutations or loaders for business data |
 | Other libraries | Zod, React Hook Form/resolvers, date-fns, Recharts, Sonner, Embla, Vaul and other UI utilities; much of this is template infrastructure rather than current booking behavior |
 | Checks | Vitest/jsdom/Testing Library, ESLint 9, Prettier. Scripts: dev, build, build:dev, preview, lint, format, test, test:watch |
-| Package management | Tracked `bun.lock` and `bunfig.toml`; untracked npm lockfile also exists. README explicitly documents npm. No `Bun.*` use found in application source |
+| Package management | Authoritative tracked `package-lock.json`; npm and Node `22.23.4`. Bun configuration and lockfile removed after successful clean-install checks |
 
 ```text
-AGENTS.md                 Lovable Git-history instructions
-README.md                 Original fictional-demo brief and Lovable/local setup links
-.lovable/project.json     Template identity and revision
+AGENTS.md                 Neutral project and Git-history instructions
+README.md                 Fictional-demo overview, local setup and Vercel settings
 package.json              Dependencies and scripts
-bun.lock, bunfig.toml      Bun lock and installation policy
-package-lock.json         Existing untracked npm lockfile
-vite.config.ts            Lovable wrapper; custom Start server entry
+package-lock.json         Authoritative npm lockfile
+vite.config.ts            Explicit Vite plugins; custom Start server entry
 tsconfig.json             Strict TS; @/* -> src/*; noEmit
 vitest.config.ts           jsdom tests; independent React Vite config
 eslint.config.js           Lint configuration
 components.json           shadcn component-generation configuration
-public/                   favicon.ico and permissive robots.txt
+public/                   Neutral favicon.svg; old icon and robots file removed
 src/assets/               Bundled clinic.jpg
 src/routes/               Pages, root shell and routing convention README
 src/routeTree.gen.ts       Generated route tree; do not hand-edit
@@ -111,28 +109,26 @@ There is no Supabase directory, database schema, migration directory, dedicated 
 - “Try next day” advances one day, not necessarily to availability, and becomes a no-op on the final displayed date. “Clinic is closed” can also be shown when there are no eligible dentists.
 - The completed-booking customer screen still says “You're booked in!” and shows the demo email message.
 
-## Lovable, Supabase and external dependencies
+## Build integration, Supabase and external dependencies
 
 | Item | Assessment |
 | --- | --- |
-| `.lovable/project.json` | Identifies template `tanstack_start_ts_current` and its revision; not clinic data or a database connection |
-| `@lovable.dev/vite-tanstack-config` | Actual build-time dependency. Supplies Start/React/Tailwind/path plugins, Nitro, devtools/error diagnostics, environment injection and sandbox behavior |
-| `vite.config.ts` | Uses that wrapper and directs Start to `src/server.ts`; warns against adding duplicate plugins |
-| `src/lib/lovable-error-reporting.ts` + root import | Optional editor/global error-reporting hooks; no direct fetch. Safe no-op when globals are absent. Remove/replace together if disconnecting tooling |
+| Removed editor integration | Template metadata, error-reporting helper/hooks, build wrapper and unused transitive dependencies have been removed |
+| `vite.config.ts` | Explicit plugins, each registered once; directs Start to `src/server.ts`, preserves import protection and aliases, targets Nitro's Vercel preset |
 | `src/server.ts`, `src/start.ts`, error helpers | Template SSR/error infrastructure; useful concepts but review wrapper behavior when adding APIs. Global last-error capture can associate the wrong error under concurrent requests; avoid logging patient data |
-| `bunfig.toml` | 24-hour minimum release age; exceptions include Lovable config/MCP/AI gateway/email/webhooks package names. These entries are not proof those SDKs are installed or used; the config package is the direct Lovable dependency |
-| `README.md`, `AGENTS.md` | Lovable project link/workflow and Git-history preservation instructions |
-| `.gitignore` | Cloudflare/Wrangler and generated output patterns from the template. Plain `.env` is not ignored; add secret-file exclusions before introducing database credentials |
-| Supabase | No Supabase dependency/client/schema/migrations/functions/auth calls found. Its name appears only in an error-serialization comment describing a possible thrown object |
+| Former package-manager policy | The removed Bun config's release-age guard is not reproduced by npm 10; review dependency updates separately |
+| `README.md`, `AGENTS.md` | Independent project setup, conventions and Git-history preservation instructions |
+| `.gitignore` | Excludes environment secrets, private key files and generated output, allowing only the blank `.env.example` template |
+| Supabase | No Supabase dependency/client/schema/migrations/functions/auth calls found |
 | Other external resources | Root loads Google Fonts; clinic image is bundled. No business API, AI SDK calls, production WebSocket connection or paid-service requirement found |
 
 Development Vite HMR uses WebSockets in normal tooling; that is separate from production app functionality. If the prohibition also covers development, disable HMR later. No production realtime feature is needed.
 
 ### Instructions and goal conflicts
 
-`AGENTS.md` says not to rewrite published Git history: no force pushing or rebasing/amending/squashing already-pushed commits. Pushed commits sync into Lovable, so keep the connected branch working. These instructions do **not** require Lovable hosting, Supabase, Bun, AI or paid services and do not conflict with the proposed stack. Make future migrations with normal new commits.
+`AGENTS.md` requires preserving published Git history and unrelated user changes, using npm and the pinned Node release, retaining file routing/aliases/server entry, and checking changes. It does not require proprietary hosting or paid services. Backend, AI and production WebSocket additions require an explicit request. These instructions fit the proposed stack.
 
-The README's original brief explicitly requested mock data and no database/login service **yet**. That describes the current prototype; the user's newer Neon/Drizzle goals supersede it for future implementation. `src/routes/README.md` correctly requests file routing and no manual generated-tree edits. The Bun comment requests confirmation before adding supply-chain exceptions; this audit adds none.
+The current README describes the browser-local demo accurately. Neon/Drizzle remain future work. `src/routes/README.md` requests file routing and no manual generated-tree edits.
 
 ## Deployment and architecture decision
 
@@ -146,21 +142,9 @@ Use a Hobby account and the included deployment domain, without a Pro trial, dom
 
 ### Adapter/configuration for this exact template
 
-Inspection of installed `@lovable.dev/vite-tanstack-config/dist/index.js` and `index.d.ts` shows that its Cloudflare setting is a **fallback** (`defaultPreset: "cloudflare-module"`), not an unconditional target outside Lovable. Nitro runs on production builds; Vercel auto-detection or `NITRO_PRESET` can select another platform. The existing config may therefore deploy unchanged when built by Vercel. An explicit target makes local/CI builds reproducible:
+`vite.config.ts` now uses ordinary Vite configuration with explicit Start, React, Tailwind and tsconfig-paths plugins. Nitro is registered once for production builds with `preset: "vercel"`. Start retains `server: { entry: "server" }`, import protection and the `@/*` alias. React/query deduplication, CSS processing and public environment injection are preserved.
 
-```ts
-// Proposed future change only; not applied by this audit.
-import { defineConfig } from "@lovable.dev/vite-tanstack-config";
-
-export default defineConfig({
-  nitro: { preset: "vercel" },
-  tanstackStart: { server: { entry: "server" } },
-});
-```
-
-Do not add a second Nitro or Start plugin while retaining the wrapper. Inside the Lovable sandbox, its forced preset/output behavior overrides outside-host choices; deploy from the repository in Vercel's build environment. Do not copy Lovable sandbox variables into Vercel.
-
-Use the TanStack Start framework preset, `npm run build` (or the equivalent Bun command) and framework-managed output settings. Do not force a static `dist` deployment that drops server functions. Verify Nitro's Vercel output and direct/deep routes in a preview. No hand-written `vercel.json` or Next.js adapter is inherently required. If removing Lovable later, replace its wrapper with ordinary Vite config containing Start, `nitro({ preset: "vercel" })`, React, Tailwind and tsconfig-paths once each, preserving the server entry and aliases. Vercel documents Nitro's automatic Vercel preset selection. [Cloudflare-to-Vercel guide](https://vercel.com/kb/guide/migrate-a-tanstack-start-app-from-cloudflare-to-vercel)
+Use the TanStack Start framework preset, `npm ci`, `npm run build`, Node 22.x and framework-managed output settings. Do not force a static `dist` deployment that drops server functions. Local output contains a `nodejs22.x` function and catch-all routing; a live preview still needs verification. No hand-written `vercel.json` or Next.js adapter is required for this configuration. [Deployment guide](https://vercel.com/kb/guide/migrate-a-tanstack-start-app-from-cloudflare-to-vercel)
 
 The pinned Nitro version is a beta. Validate the existing versions before undertaking unrelated upgrades; the installed Vite requires Node `^20.19.0 || >=22.12.0`. Prefer a Vercel-supported Node 22 release meeting that minimum, pinned consistently in development and deployment.
 
@@ -243,4 +227,4 @@ Each session should end with one reviewable change and its targeted check. Estim
 | 11. Accessibility and phone pass | Two 30–45 min sessions | First labels/keyboard/focus/status; then 320–390 px, tablet, zoom, contrast, safe areas and long content |
 | 12. Remove demo claims and final-check deployment | 30–45 min | Remove fake email/reviews/busy blocks where appropriate; test all routes and server functions on Vercel with Neon HTTP; confirm free-plan settings and no runtime WebSockets/AI. Keep real patient data out until security and applicable handling requirements are addressed |
 
-Optional later session: replace the Lovable wrapper with explicit Vite plugins and remove unused editor hooks/dependencies after the deployment baseline is proven. Preserve published history throughout.
+Completed tooling work: npm/Node standardization, secret-file exclusions, explicit Vite plugins, neutral metadata and removal of editor hooks/dependencies. See VALIDATION.md for checks and remaining limitations. Preserve published history throughout.
