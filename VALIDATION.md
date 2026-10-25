@@ -38,3 +38,14 @@ Baseline failures are recorded rather than repaired as part of this tooling-only
 - Inspected `.vercel/output/config.json`: Build Output API version 3, asset handling and catch-all routing to `/__server`. Inspected `functions/__server.func/.vc-config.json`: handler `index.mjs`, runtime `nodejs22.x`, response streaming enabled. Generated output is ignored, not committed.
 - `git diff --check` passed. Application source was not edited; the pre-existing route-tree status entry and untracked AUDIT.md remain outside the migration commits.
 - Not verified: an actual Vercel deployment, hosted patch version, preview URL/deep-link behavior, browser/mobile behavior or account settings. No database was added. Baseline lint errors remain; no unrelated fixes or upgrades were made.
+
+## Independent build configuration — 25 October 2026
+
+- Replaced the editor build wrapper with explicit tsconfig-paths, Tailwind, Start, Nitro and React plugins, each registered once. Nitro remains build-only with the `vercel` preset, matching the previous development behavior.
+- Preserved `src/server.ts`, `@/*`, import protection, React/query deduplication, public environment injection and development-build settings. Kept Lightning CSS at the previously locked 1.33.0 version as an explicit build dependency.
+- Removed the wrapper and its unused transitive packages. Deleted node_modules and the old dependency backup/generated output before `npm install --no-audit --no-fund`; then `npm ci --no-audit --no-fund` passed. npm logs confirm exit 0 for both. No retained locked dependency changed version.
+- Node 22.23.4: production build passed, generating a `nodejs22.x` Vercel function; 2 test files / 4 tests passed.
+- `npm run lint` remains failing on the pre-existing formatting baseline: 5,953 errors and 12 warnings. A fresh pre-change tracked-source snapshot had 6,009 errors and 12 warnings; comparing file/rule/message counts found zero new or increased diagnostic groups. Only edited build configs were formatted. Generated `.vercel` and `.tanstack` artifacts are excluded from lint instead of linting cached third-party code.
+- `npm run dev -- --host 127.0.0.1 --port 5173 --strictPort` started successfully. HTTP checks returned 200 for `/`, `/book`, `/booking/B1000`, `/admin`, `/admin/calendar`, `/admin/manage`, `/admin/bookings/B1000`, and `/favicon.svg`; an unknown route returned 404. Responses contained no removed-editor references.
+- Vite reports that tsconfig-paths can now be replaced by its native resolver; the requested plugin is retained. Existing dependency deprecation warnings remain. No framework upgrades were made.
+- `git diff --check` passed. Not verified: full interactive browser/mobile flows or a live Vercel deployment. The HTTP checks verify document serving, not hydrated interactions. The user's separate deletion of `public/robots.txt` remains untouched.
